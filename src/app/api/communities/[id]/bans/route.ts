@@ -24,14 +24,14 @@ export async function GET(
     });
 
     // Get banned user details
-    const userIds = bans.map((b) => b.userId);
+    const userIds = bans.map((b: { userId: string }) => b.userId);
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, email: true, image: true },
     });
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const result = bans.map((b) => ({
+    const result = bans.map((b: (typeof bans)[number]) => ({
       ...b,
       user: userMap.get(b.userId) || null,
     }));
