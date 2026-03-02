@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized, requireCommunityRole } from "@/lib/session";
+import { isDemoUser } from "@/lib/demo-data";
 
 /**
  * DELETE /api/teams/[id]/players — Remove a player from team
@@ -13,6 +14,7 @@ export async function DELETE(
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const { id: teamId } = await params;
 

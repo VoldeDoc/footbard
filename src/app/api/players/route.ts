@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const { name, position, jerseyNumber, teamId, image } = await req.json();
 

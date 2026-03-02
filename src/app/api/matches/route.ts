@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const { leagueId, homeTeamId, awayTeamId, matchDate, venue, status } = await req.json();
 
@@ -82,6 +83,7 @@ export async function PUT(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const { id, homeScore, awayScore, status, recap } = await req.json();
 

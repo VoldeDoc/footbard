@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized, requireCommunityRole } from "@/lib/session";
 import { updateStandings } from "@/lib/standings";
 import { recalcMatchPlayerStats } from "@/lib/player-stats";
+import { isDemoUser } from "@/lib/demo-data";
 
 /**
  * POST /api/matches/submit-result
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const body = await req.json();
     const { matchId, homeScore, awayScore, events, lineups } = body;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized, requireCommunityRole, isBannedFromCommunity } from "@/lib/session";
+import { isDemoUser } from "@/lib/demo-data";
 
 /**
  * GET /api/teams/invites — Get invites
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json([]);
 
     const { searchParams } = new URL(req.url);
     const teamId = searchParams.get("teamId");
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     const { teamId, targetUserId, message } = await req.json();
 

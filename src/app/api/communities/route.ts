@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json({ success: true, demo: true });
 
     // Any authenticated user can create a community; they become COMMUNITY_MOD of it
     const { name, description, logo, banner } = await req.json();
