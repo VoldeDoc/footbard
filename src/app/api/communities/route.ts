@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, unauthorized, requireRole } from "@/lib/session";
+import { getCurrentUser, unauthorized } from "@/lib/session";
+import { Role } from "@prisma/client";
 
 function slugify(text: string) {
   return text
@@ -9,8 +10,43 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const mine = searchParams.get("mine");
+
+    if (mine === "true") {
+      const user = await getCurrentUser();
+      if (!user) return unauthorized();
+
+      const memberships = await prisma.communityMember.findMany({
+        where: {
+          userId: user.id,
+          role: { in: [Role.COMMUNITY_MOD, Role.ADMIN, Role.SUPER_ADMIN] },
+        },
+        include: {
+          community: {
+            include: { _count: { select: { members: true, teams: true, leagues: true } } },
+          },
+        },
+      });
+
+      // Also include communities created by this user (in case membership row missing)
+      const created = await prisma.community.findMany({
+        where: { createdById: user.id, isSuspended: false },
+        include: { _count: { select: { members: true, teams: true, leagues: true } } },
+      });
+
+      const memberCommunities = memberships
+        .filter((m) => !m.community.isSuspended)
+        .map((m) => m.community);
+
+      const allMap = new Map<string, typeof memberCommunities[0]>();
+      [...memberCommunities, ...created].forEach((c) => allMap.set(c.id, c));
+
+      return NextResponse.json(Array.from(allMap.values()));
+    }
+
     const communities = await prisma.community.findMany({
       where: { isSuspended: false },
       include: {
@@ -31,10 +67,7 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
 
-    // Only COMMUNITY_MOD or SUPER_ADMIN can create communities
-    const roleCheck = requireRole(user, "COMMUNITY_MOD", "SUPER_ADMIN");
-    if (roleCheck) return roleCheck;
-
+    // Any authenticated user can create a community; they become COMMUNITY_MOD of it
     const { name, description, logo, banner } = await req.json();
 
     if (!name || name.trim().length < 2) {
@@ -68,6 +101,14 @@ export async function POST(req: NextRequest) {
         _count: { select: { members: true, teams: true, leagues: true } },
       },
     });
+
+    // Ensure the user's global role is at least COMMUNITY_MOD so they can manage things
+    if (user.role === "USER") {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: "COMMUNITY_MOD" },
+      });
+    }
 
     return NextResponse.json(community, { status: 201 });
   } catch (error) {

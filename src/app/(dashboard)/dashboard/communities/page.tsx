@@ -16,8 +16,7 @@ interface Community {
 }
 
 export default function CommunitiesPage() {
-  const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role || "USER";
+  const { data: session, update: updateSession } = useSession();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -25,7 +24,8 @@ export default function CommunitiesPage() {
   const [form, setForm] = useState({ name: "", description: "" });
   const [creating, setCreating] = useState(false);
 
-  const canCreate = ["COMMUNITY_MOD", "SUPER_ADMIN"].includes(userRole);
+  // Any logged-in user can create a community
+  const canCreate = !!session?.user;
 
   useEffect(() => {
     fetch("/api/communities")
@@ -54,6 +54,8 @@ export default function CommunitiesPage() {
       setCommunities((prev) => [data, ...prev]);
       setShowCreate(false);
       setForm({ name: "", description: "" });
+      // Refresh session so teams page picks up the new community immediately
+      await updateSession();
     } catch {
       toast.error("Failed to create community");
     } finally {

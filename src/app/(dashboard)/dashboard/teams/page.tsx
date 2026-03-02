@@ -17,19 +17,34 @@ interface Team {
   _count: { players: number };
 }
 
+interface Community {
+  id: string;
+  name: string;
+}
+
 export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ name: "", shortName: "" });
+  const [form, setForm] = useState({ name: "", shortName: "", communityId: "" });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    fetch("/api/teams")
-      .then((res) => (res.ok ? res.json() : []))
-      .then(setTeams)
-      .catch(() => toast.error("Failed to load teams"))
+    Promise.all([
+      fetch("/api/teams").then((res) => (res.ok ? res.json() : [])),
+      fetch("/api/communities?mine=true").then((res) => (res.ok ? res.json() : [])),
+    ])
+      .then(([teamsData, communitiesData]) => {
+        setTeams(teamsData);
+        setCommunities(communitiesData);
+        // Auto-select if user only belongs to one community
+        if (communitiesData.length === 1) {
+          setForm((f) => ({ ...f, communityId: communitiesData[0].id }));
+        }
+      })
+      .catch(() => toast.error("Failed to load data"))
       .finally(() => setFetching(false));
   }, []);
 
@@ -44,13 +59,13 @@ export default function TeamsPage() {
       const res = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, communityId: "default" }),
+        body: JSON.stringify(form),
       });
       if (res.ok) {
         const team = await res.json();
         setTeams([...teams, { ...team, _count: { players: 0 } }]);
         setShowModal(false);
-        setForm({ name: "", shortName: "" });
+        setForm({ name: "", shortName: "", communityId: communities.length === 1 ? communities[0].id : "" });
         toast.success("Team created successfully!");
       } else {
         const data = await res.json();
@@ -135,6 +150,12 @@ export default function TeamsPage() {
 
       {/* Create Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Team">
+        {communities.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-muted-light text-sm mb-4">You need to create a community first before adding teams.</p>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
+          </div>
+        ) : (
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-muted-light mb-2">Team Name</label>
@@ -158,6 +179,22 @@ export default function TeamsPage() {
               maxLength={5}
             />
           </div>
+          {communities.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium text-muted-light mb-2">Community</label>
+              <select
+                value={form.communityId}
+                onChange={(e) => setForm({ ...form, communityId: e.target.value })}
+                className="w-full px-4 py-3 text-sm"
+                required
+              >
+                <option value="">Select a community...</option>
+                {communities.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
               Cancel
@@ -167,6 +204,7 @@ export default function TeamsPage() {
             </Button>
           </div>
         </form>
+        )}
       </Modal>
     </div>
   );

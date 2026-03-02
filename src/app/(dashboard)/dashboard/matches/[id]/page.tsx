@@ -112,7 +112,7 @@ export default function MatchCenterPage({ params }: { params: Promise<{ id: stri
     .map((l: any) => ({
       id: l.player.id,
       name: l.player.name,
-      jerseyNumber: l.player.jerseyNumber,
+      shirtNumber: l.player.shirtNumber,
       position: l.player.position,
       positionX: l.positionX,
       positionY: l.positionY,
@@ -125,7 +125,7 @@ export default function MatchCenterPage({ params }: { params: Promise<{ id: stri
     .map((l: any) => ({
       id: l.player.id,
       name: l.player.name,
-      jerseyNumber: l.player.jerseyNumber,
+      shirtNumber: l.player.shirtNumber,
       position: l.player.position,
       positionX: l.positionX,
       positionY: l.positionY,
@@ -381,7 +381,7 @@ export default function MatchCenterPage({ params }: { params: Promise<{ id: stri
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-xs">
-                      {lineup.player.jerseyNumber || lineup.player.name.charAt(0)}
+                      {lineup.player.shirtNumber || lineup.player.name.charAt(0)}
                     </span>
                   </div>
                   <span className="text-xs text-foreground font-medium text-center truncate w-full">

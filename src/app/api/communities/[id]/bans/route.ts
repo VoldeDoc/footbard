@@ -90,10 +90,23 @@ export async function POST(
     });
     const teamIds = communityTeams.map((t) => t.id);
 
-    await prisma.player.updateMany({
-      where: { teamId: { in: teamIds }, userId },
-      data: { isBanned: true },
+    // Find players associated with this user through join requests
+    const userJoinRequests = await prisma.teamJoinRequest.findMany({
+      where: { 
+        userId,
+        teamId: { in: teamIds },
+        status: "ACCEPTED"
+      },
+      select: { playerId: true },
     });
+    const playerIds = userJoinRequests.map((request) => request.playerId);
+
+    if (playerIds.length > 0) {
+      await prisma.player.updateMany({
+        where: { id: { in: playerIds } },
+        data: { isBanned: true },
+      });
+    }
 
     // Cancel pending join requests
     await prisma.teamJoinRequest.updateMany({

@@ -41,9 +41,9 @@ export async function POST(
       return NextResponse.json({ error: "startDate is required" }, { status: 400 });
     }
 
-    // Get accepted teams
+    // Get all teams in the league
     const leagueTeams = await prisma.leagueTeam.findMany({
-      where: { leagueId, status: "ACCEPTED" },
+      where: { leagueId },
       select: { teamId: true },
     });
 

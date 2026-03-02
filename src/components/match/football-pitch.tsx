@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 interface PlayerPosition {
   id: string;
   name: string;
-  jerseyNumber?: number;
+  shirtNumber?: number;
   position: string;
   positionX: number;
   positionY: number;
@@ -81,7 +81,7 @@ export function FootballPitch({ players, onPlayerClick, readonly }: FootballPitc
             <div className="relative">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary border-2 border-white shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                 <span className="text-white text-xs md:text-sm font-bold">
-                  {player.jerseyNumber || "?"}
+                  {player.shirtNumber || "?"}
                 </span>
               </div>
               {/* Rating badge */}
@@ -121,7 +121,7 @@ export function FootballPitch({ players, onPlayerClick, readonly }: FootballPitc
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card hover:bg-card-hover border border-border transition-all cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-full bg-muted/20 flex items-center justify-center text-xs font-bold text-muted-light">
-                  {player.jerseyNumber || "?"}
+                  {player.shirtNumber || "?"}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-foreground">{player.name}</p>

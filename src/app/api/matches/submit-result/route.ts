@@ -174,14 +174,14 @@ export async function POST(req: NextRequest) {
         league: { select: { id: true, name: true } },
         events: {
           include: {
-            player: { select: { id: true, name: true, jerseyNumber: true } },
-            relatedPlayer: { select: { id: true, name: true, jerseyNumber: true } },
+            player: { select: { id: true, name: true, shirtNumber: true } },
+            relatedPlayer: { select: { id: true, name: true, shirtNumber: true } },
           },
           orderBy: { minute: "asc" },
         },
         lineups: {
           include: {
-            player: { select: { id: true, name: true, jerseyNumber: true, position: true } },
+            player: { select: { id: true, name: true, shirtNumber: true, position: true } },
           },
         },
       },

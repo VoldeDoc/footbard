@@ -20,20 +20,20 @@ export async function GET(
         league: { select: { id: true, name: true, season: true, communityId: true } },
         lineups: {
           include: {
-            player: { select: { id: true, name: true, image: true, position: true, jerseyNumber: true } },
+            player: { select: { id: true, name: true, position: true, shirtNumber: true } },
           },
           orderBy: { isStarter: "desc" },
         },
         events: {
           include: {
-            player: { select: { id: true, name: true, jerseyNumber: true } },
-            relatedPlayer: { select: { id: true, name: true, jerseyNumber: true } },
+            player: { select: { id: true, name: true, shirtNumber: true } },
+            relatedPlayer: { select: { id: true, name: true, shirtNumber: true } },
           },
           orderBy: { minute: "asc" },
         },
         mvpVotes: {
           include: {
-            player: { select: { id: true, name: true, image: true } },
+            player: { select: { id: true, name: true } },
           },
         },
       },

@@ -83,7 +83,14 @@ export async function requireCommunityRole(
   if (user.role === "SUPER_ADMIN") return null;
 
   const member = await getCommunityMember(user.id, communityId);
-  if (!member || !roles.includes(member.role)) {
+  if (!member || !roles.includes(member.role as string)) {
+    // Fallback: community creator always has access
+    const community = await prisma.community.findUnique({
+      where: { id: communityId },
+      select: { createdById: true },
+    });
+    if (community?.createdById === user.id) return null;
+
     return NextResponse.json(
       { error: "You don't have permission in this community" },
       { status: 403 }

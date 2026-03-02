@@ -9,9 +9,32 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const communityId = searchParams.get("communityId");
+    const mine = searchParams.get("mine");
+
+    let whereClause: any = {};
+
+    if (mine === "true") {
+      // Only teams from communities where user is a mod/admin/creator
+      const memberships = await prisma.communityMember.findMany({
+        where: { userId: user.id },
+        select: { communityId: true },
+      });
+      const created = await prisma.community.findMany({
+        where: { createdById: user.id },
+        select: { id: true },
+      });
+      const allCommunityIds = [
+        ...memberships.map((m) => m.communityId),
+        ...created.map((c) => c.id),
+      ];
+      const uniqueIds = [...new Set(allCommunityIds)];
+      whereClause = { communityId: { in: uniqueIds } };
+    } else if (communityId) {
+      whereClause = { communityId };
+    }
 
     const teams = await prisma.team.findMany({
-      where: communityId ? { communityId } : undefined,
+      where: whereClause,
       include: {
         _count: { select: { players: true } },
         community: { select: { id: true, name: true } },
@@ -31,7 +54,7 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
 
-    const { name, shortName, logo, communityId, formation } = await req.json();
+    const { name, shortName, logo, communityId } = await req.json();
 
     if (!name || !communityId) {
       return NextResponse.json({ error: "Name and community are required" }, { status: 400 });
@@ -42,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (roleCheck) return roleCheck;
 
     const team = await prisma.team.create({
-      data: { name, shortName, logo, communityId, formation },
+      data: { name, shortName, logo, communityId },
     });
 
     return NextResponse.json(team, { status: 201 });

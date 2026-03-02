@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (roleCheck) return roleCheck;
 
     const player = await prisma.player.create({
-      data: { name, position, jerseyNumber, teamId, image },
+      data: { name, position, shirtNumber: jerseyNumber ?? null, teamId },
     });
 
     return NextResponse.json(player, { status: 201 });

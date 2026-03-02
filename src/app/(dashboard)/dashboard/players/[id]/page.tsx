@@ -35,7 +35,7 @@ interface PlayerData {
   name: string;
   image?: string;
   position: string;
-  jerseyNumber?: number;
+  shirtNumber?: number;
   goals: number;
   assists: number;
   appearances: number;
@@ -131,9 +131,9 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ id: st
                 <UserCircle className="w-16 h-16 text-primary" />
               )}
             </div>
-            {player.jerseyNumber && (
+            {player.shirtNumber && (
               <span className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-lg font-bold text-white">
-                {player.jerseyNumber}
+                {player.shirtNumber}
               </span>
             )}
           </div>

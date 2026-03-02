@@ -7,8 +7,8 @@ interface MatchEvent {
   id: string;
   type: string;
   minute: number;
-  player: { id: string; name: string; jerseyNumber?: number };
-  relatedPlayer?: { id: string; name: string; jerseyNumber?: number } | null;
+  player: { id: string; name: string; shirtNumber?: number };
+  relatedPlayer?: { id: string; name: string; shirtNumber?: number } | null;
   description?: string;
 }
 
@@ -68,8 +68,8 @@ export function EventTimeline({ events }: EventTimelineProps) {
                 </div>
                 <p className="text-sm text-foreground font-medium">
                   {event.player.name}
-                  {event.player.jerseyNumber && (
-                    <span className="text-muted ml-1">#{event.player.jerseyNumber}</span>
+                  {event.player.shirtNumber && (
+                    <span className="text-muted ml-1">#{event.player.shirtNumber}</span>
                   )}
                 </p>
                 {event.relatedPlayer && (

@@ -13,12 +13,17 @@ import Link from "next/link";
 
 const positions = ["GK", "CB", "LB", "RB", "LWB", "RWB", "CDM", "CM", "CAM", "LM", "RM", "LW", "RW", "ST", "CF"];
 
+interface Team {
+  id: string;
+  name: string;
+}
+
 interface Player {
   id: string;
   name: string;
   image?: string;
   position: string;
-  jerseyNumber?: number;
+  shirtNumber?: number;
   teamId: string;
   goals: number;
   assists: number;
@@ -29,6 +34,7 @@ interface Player {
 
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [posFilter, setPosFilter] = useState("");
@@ -37,10 +43,15 @@ export default function PlayersPage() {
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    fetch("/api/players")
-      .then((res) => (res.ok ? res.json() : []))
-      .then(setPlayers)
-      .catch(() => toast.error("Failed to load players"))
+    Promise.all([
+      fetch("/api/players").then((res) => (res.ok ? res.json() : [])),
+      fetch("/api/teams?mine=true").then((res) => (res.ok ? res.json() : [])),
+    ])
+      .then(([playersData, teamsData]) => {
+        setPlayers(playersData);
+        setTeams(teamsData);
+      })
+      .catch(() => toast.error("Failed to load data"))
       .finally(() => setFetching(false));
   }, []);
 
@@ -63,6 +74,9 @@ export default function PlayersPage() {
         }),
       });
       if (res.ok) {
+        const newPlayer = await res.json();
+        const teamData = teams.find((t) => t.id === form.teamId);
+        setPlayers((prev) => [...prev, { ...newPlayer, team: teamData ?? { id: form.teamId, name: "" } }]);
         toast.success("Player added successfully!");
         setShowModal(false);
         setForm({ name: "", position: "ST", jerseyNumber: "", teamId: "" });
@@ -140,9 +154,9 @@ export default function PlayersPage() {
                         <UserCircle className="w-8 h-8 text-primary" />
                       )}
                     </div>
-                    {player.jerseyNumber && (
+                    {player.shirtNumber && (
                       <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center text-xs font-bold text-foreground">
-                        {player.jerseyNumber}
+                        {player.shirtNumber}
                       </span>
                     )}
                   </div>
@@ -226,6 +240,20 @@ export default function PlayersPage() {
                 max={99}
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted-light mb-2">Team</label>
+            <select
+              value={form.teamId}
+              onChange={(e) => setForm({ ...form, teamId: e.target.value })}
+              className="w-full px-4 py-3 text-sm"
+              required
+            >
+              <option value="">Select a team...</option>
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">

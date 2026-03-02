@@ -53,11 +53,8 @@ export async function POST(
       return NextResponse.json({ error: "Team already in league" }, { status: 400 });
     }
 
-    // Same community = auto-accept, different = pending
-    const status = team.communityId === league.communityId ? "ACCEPTED" : "PENDING";
-
     const leagueTeam = await prisma.leagueTeam.create({
-      data: { leagueId, teamId, status },
+      data: { leagueId, teamId },
     });
 
     return NextResponse.json(leagueTeam, { status: 201 });
