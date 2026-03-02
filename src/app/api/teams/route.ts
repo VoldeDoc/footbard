@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
+import { isDemoUser, DEMO_TEAMS } from "@/lib/demo-data";
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+
+    if (isDemoUser(user.email)) {
+      const { searchParams } = new URL(req.url);
+      const communityId = searchParams.get("communityId");
+      const data = communityId ? DEMO_TEAMS.filter((t) => t.communityId === communityId) : DEMO_TEAMS;
+      return NextResponse.json(data);
+    }
 
     const { searchParams } = new URL(req.url);
     const communityId = searchParams.get("communityId");

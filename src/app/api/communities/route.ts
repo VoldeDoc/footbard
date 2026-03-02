@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
+import { isDemoUser, DEMO_COMMUNITY } from "@/lib/demo-data";
 
 function slugify(text: string) {
   return text
@@ -13,15 +14,13 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const mine = searchParams.get("mine");
+    const user = await getCurrentUser();
+    if (mine === "true" && !user) return unauthorized();
+    if (isDemoUser(user?.email)) return NextResponse.json([DEMO_COMMUNITY]);
 
-    if (mine === "true") {
-      const user = await getCurrentUser();
-      if (!user) return unauthorized();
-
+    if (mine === "true" && user) {
       const memberships = await prisma.communityMember.findMany({
-        where: {
-          userId: user.id,
-        },
+        where: { userId: user.id },
         include: {
           community: {
             include: { _count: { select: { members: true, teams: true, leagues: true } } },
@@ -29,7 +28,6 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      // Also include communities created by this user (in case membership row missing)
       const created = await prisma.community.findMany({
         where: { createdById: user.id, isSuspended: false },
         include: { _count: { select: { members: true, teams: true, leagues: true } } },

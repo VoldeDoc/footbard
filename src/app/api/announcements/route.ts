@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized, requireCommunityRole } from "@/lib/session";
+import { isDemoUser, DEMO_ANNOUNCEMENTS } from "@/lib/demo-data";
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json(DEMO_ANNOUNCEMENTS);
 
     const { searchParams } = new URL(req.url);
     const communityId = searchParams.get("communityId");

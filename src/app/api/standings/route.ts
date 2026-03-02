@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser, unauthorized } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { isDemoUser, DEMO_STANDINGS } from "@/lib/demo-data";
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json(DEMO_STANDINGS);
 
     const { searchParams } = new URL(req.url);
     const leagueId = searchParams.get("leagueId");

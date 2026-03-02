@@ -1,20 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
+import { isDemoUser, DEMO_DASHBOARD_OVERVIEW } from "@/lib/demo-data";
 
-/**
- * GET /api/dashboard/overview
- *
- * Returns aggregated dashboard data from real database records:
- * - totalTeams, totalMatches, activeLeagues, totalGoals
- * - recentMatches (last 5 completed)
- * - topScorers (top 5 by goals)
- * - weeklyActivity (matches & goals per week for last 8 weeks)
- */
 export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json(DEMO_DASHBOARD_OVERVIEW);
 
     const [
       totalTeams,

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { DEMO_USER } from "@/lib/demo-data";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -15,6 +16,21 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
         }
+
+        // ── DEMO shortcut — no DB needed ──────────────
+        if (
+          credentials.email === "demo@example.com" &&
+          credentials.password === "demo123"
+        ) {
+          return {
+            id: DEMO_USER.id,
+            name: DEMO_USER.name,
+            email: DEMO_USER.email,
+            image: null,
+            role: DEMO_USER.role,
+          };
+        }
+        // ─────────────────────────────────────────────
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },

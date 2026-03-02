@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized, requireCommunityRole } from "@/lib/session";
+import { isDemoUser, DEMO_LEAGUE } from "@/lib/demo-data";
 
 /**
  * GET /api/leagues — List leagues (optionally by communityId)
@@ -9,6 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
+    if (isDemoUser(user.email)) return NextResponse.json([DEMO_LEAGUE]);
 
     const { searchParams } = new URL(req.url);
     const communityId = searchParams.get("communityId");

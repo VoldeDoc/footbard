@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
+import { isDemoUser, DEMO_MATCHES } from "@/lib/demo-data";
 
 export async function GET(
   req: NextRequest,
@@ -11,6 +12,13 @@ export async function GET(
     if (!user) return unauthorized();
 
     const { id } = await params;
+
+    if (isDemoUser(user.email)) {
+      const match = DEMO_MATCHES.find((m) => m.id === id);
+      if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+      const plain = { ...match, events: match.events, lineups: match.lineups };
+      return NextResponse.json(plain);
+    }
 
     const match = await prisma.match.findUnique({
       where: { id },

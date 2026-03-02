@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
+import { isDemoUser, DEMO_PLAYERS } from "@/lib/demo-data";
 
 export async function GET(
   req: NextRequest,
@@ -11,6 +12,12 @@ export async function GET(
     if (!user) return unauthorized();
 
     const { id } = await params;
+
+    if (isDemoUser(user.email)) {
+      const player = DEMO_PLAYERS.find((p) => p.id === id);
+      if (!player) return NextResponse.json({ error: "Player not found" }, { status: 404 });
+      return NextResponse.json({ ...player, averageRating: 7.2 });
+    }
 
     const player = await prisma.player.findUnique({
       where: { id },
