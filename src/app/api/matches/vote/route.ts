@@ -15,12 +15,12 @@ export async function POST(req: NextRequest) {
 
     const vote = await prisma.mvpVote.upsert({
       where: {
-        matchId_userId: { matchId, userId: user.id },
+        matchId_voterId: { matchId, voterId: user.id },
       },
       create: {
         matchId,
         playerId,
-        userId: user.id,
+        voterId: user.id,
       },
       update: {
         playerId,
