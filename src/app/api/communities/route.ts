@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/session";
-import { Role } from "@prisma/client";
 
 function slugify(text: string) {
   return text
@@ -22,7 +21,6 @@ export async function GET(req: NextRequest) {
       const memberships = await prisma.communityMember.findMany({
         where: {
           userId: user.id,
-          role: { in: [Role.COMMUNITY_MOD, Role.ADMIN, Role.SUPER_ADMIN] },
         },
         include: {
           community: {
@@ -43,6 +41,20 @@ export async function GET(req: NextRequest) {
 
       const allMap = new Map<string, typeof memberCommunities[0]>();
       [...memberCommunities, ...created].forEach((c) => allMap.set(c.id, c));
+
+      // Self-heal: ensure creator has a CommunityMember row for each community they created
+      const memberIds = new Set(memberships.map((m) => m.communityId));
+      const missingMemberships = created.filter((c) => !memberIds.has(c.id));
+      if (missingMemberships.length > 0) {
+        await prisma.communityMember.createMany({
+          data: missingMemberships.map((c) => ({
+            userId: user.id,
+            communityId: c.id,
+            role: "COMMUNITY_MOD",
+          })),
+          skipDuplicates: true,
+        });
+      }
 
       return NextResponse.json(Array.from(allMap.values()));
     }
@@ -90,16 +102,17 @@ export async function POST(req: NextRequest) {
         logo,
         banner,
         createdById: user.id,
-        members: {
-          create: {
-            userId: user.id,
-            role: "COMMUNITY_MOD",
-          },
-        },
       },
       include: {
         _count: { select: { members: true, teams: true, leagues: true } },
       },
+    });
+
+    // Upsert member record (safe if already exists)
+    await prisma.communityMember.upsert({
+      where: { userId_communityId: { userId: user.id, communityId: community.id } },
+      update: { role: "COMMUNITY_MOD" },
+      create: { userId: user.id, communityId: community.id, role: "COMMUNITY_MOD" },
     });
 
     // Ensure the user's global role is at least COMMUNITY_MOD so they can manage things

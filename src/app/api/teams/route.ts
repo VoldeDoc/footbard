@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, unauthorized, requireCommunityRole } from "@/lib/session";
+import { getCurrentUser, unauthorized } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,9 +60,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name and community are required" }, { status: 400 });
     }
 
-    // Only COMMUNITY_MOD/ADMIN of that community (or SUPER_ADMIN) can create teams
-    const roleCheck = await requireCommunityRole(user, communityId, "COMMUNITY_MOD", "ADMIN");
-    if (roleCheck) return roleCheck;
+    // Allow: SUPER_ADMIN, community creator, or any community member
+    if (user.role !== "SUPER_ADMIN") {
+      const community = await prisma.community.findUnique({
+        where: { id: communityId },
+        select: { createdById: true },
+      });
+      if (!community) {
+        return NextResponse.json({ error: "Community not found" }, { status: 404 });
+      }
+      const isMember = await prisma.communityMember.findUnique({
+        where: { userId_communityId: { userId: user.id, communityId } },
+      });
+      const isCreator = community.createdById === user.id;
+      if (!isMember && !isCreator) {
+        return NextResponse.json({ error: "You must be a member of this community to create a team" }, { status: 403 });
+      }
+    }
 
     const team = await prisma.team.create({
       data: { name, shortName, logo, communityId },

@@ -204,9 +204,10 @@ model Player {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  team         Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  events       MatchEvent[]
-  mvpVotes     MvpVote[]
+  team          Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  events        MatchEvent[]      @relation("EventPlayer")
+  relatedEvents MatchEvent[]      @relation("EventRelatedPlayer")
+  mvpVotes      MvpVote[]
   lineups      MatchLineup[]
   members      TeamMember[]
   joinRequests TeamJoinRequest[]
@@ -283,8 +284,10 @@ model MatchEvent {
   details   String?
   createdAt DateTime  @default(now())
 
-  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [playerId], references: [id])
+  match           Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player          Player  @relation("EventPlayer", fields: [playerId], references: [id])
+  relatedPlayerId String?
+  relatedPlayer   Player? @relation("EventRelatedPlayer", fields: [relatedPlayerId], references: [id])
 
   @@map("match_events")
 }

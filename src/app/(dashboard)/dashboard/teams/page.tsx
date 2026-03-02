@@ -179,7 +179,7 @@ export default function TeamsPage() {
               maxLength={5}
             />
           </div>
-          {communities.length > 1 && (
+          {communities.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-muted-light mb-2">Community</label>
               <select
