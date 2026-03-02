@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const event = await prisma.matchEvent.create({
-      data: { matchId, type, minute, playerId, relatedPlayerId, description },
+      data: { matchId, type, minute, playerId, relatedPlayerId /* description field not in schema */ },
     });
 
     // Recalculate stats for involved players from all their events
