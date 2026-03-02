@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
 
-    const { matchId, type, minute, playerId, relatedPlayerId, description } = await req.json();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { matchId, type, minute, playerId, relatedPlayerId, description: _description } = await req.json();
 
     if (!matchId || !type || minute === undefined || !playerId) {
       return NextResponse.json({ error: "Required fields missing" }, { status: 400 });
